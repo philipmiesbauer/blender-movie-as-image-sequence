@@ -24,7 +24,7 @@ def is_exe(file_path):
     return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
 
 
-def which(program, fail=True):
+def which(program):
     """ Sort of replicates the `which` utility.
     """
     if sys.platform == 'win32':
@@ -34,10 +34,7 @@ def which(program, fail=True):
     found = [loc for loc in locations if is_exe(loc)]
 
     if not found:
-        if not fail:
-            return False
-        else:
-            return None
+        return ''
     else:
         return found[0]
 
@@ -49,8 +46,7 @@ class OpenImageSequenceAddonPreferences(AddonPreferences):
 
     ffmpeg_path = "Point to location of ffmpeg executable"
     exec_path = which('ffmpeg')
-    if exec_path is not None:
-        ffmpeg_path = exec_path
+    ffmpeg_path = exec_path
 
     ffmpeg_exec_path: StringProperty(
         name="'ffmpeg' executable",
@@ -81,6 +77,11 @@ class OpenAsImageSequence(Operator):
             )
 
     def invoke(self, context, event):
+        preferences = context.preferences
+        prefs = preferences.addons[__name__].preferences
+        if prefs.ffmpeg_exec_path == '':
+            self.report({'WARNING'}, "Couldn't locate 'ffmpeg' executable")
+            return {'CANCELLED'}
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
@@ -96,8 +97,7 @@ class OpenAsImageSequence(Operator):
         (dir_name, extention) = splitext(self.filepath)
         if not os.path.isdir(dir_name):
             os.mkdir(dir_name)
-        # progress from [0 - 100]
-        wm.progress_begin(0, 2)
+
         wm.progress_update(1)
         process = subprocess.Popen([prefs.ffmpeg_exec_path,
                                     '-y',
