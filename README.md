@@ -30,6 +30,9 @@ Once this option is selected a file dialog opens. Select the video you would lik
 The movie will then be converted into an image sequence using ffmpeg, the image sequence will be opened and the
 correct frame range will be set in the scene.
 
+**NOTE:** While the movie is being converted Blender will freeze. How long is dependent on the length of your video, but
+it can be several minutes.
+
 ## Troubleshooting
 
 ### Can't locate 'ffmpeg' executable
