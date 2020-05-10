@@ -43,3 +43,7 @@ Two solutions are avaiable for solving this problem.
 2. Insert the location of the ffmpeg executable manually in the **Preferences** of the Add-on.  
 NOTE: Ensure the Add-on is enabled, as you will not be able to see the Preferences tab otherwise.
 ![Menu Item](Images/preferences.jpg)
+
+### Any other problems
+
+If you have encountered any other issues, then please raise a [new issue](https://github.com/philipmiesbauer/blender-movie-as-image-sequence/issues/new/choose) in this repository
