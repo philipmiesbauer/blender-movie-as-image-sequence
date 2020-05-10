@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Open as Image Sequence",
     "author": "Philip Miesbauer",
-    "version": (1, 0),
+    "version": (1, 1),
     "blender": (2, 80, 0),
     "location": "Movie Clip Editor > Clip > Open Clip as Image Sequence",
     "warning": "ffmpeg needs to be installed on your system",
@@ -12,13 +12,16 @@ bl_info = {
 }
 
 
-import bpy
-from bpy.types import Operator, AddonPreferences
-from bpy.props import StringProperty, CollectionProperty
-from os.path import isfile, join, splitext, basename
-import errno
-import os
-import sys
+import bpy  # noqa: E402
+from bpy.types import Operator, AddonPreferences  # noqa: E402
+from bpy.props import StringProperty  # noqa: E402
+from os.path import isfile, join, splitext, basename  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
+
+
+def is_exe(file_path):
+    return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
 
 
 def which(program, fail=True):
@@ -26,9 +29,9 @@ def which(program, fail=True):
     """
     if sys.platform == 'win32':
         program = program + '.exe'
-    is_exe    = lambda fp: os.path.isfile(fp) and os.access(fp, os.X_OK)
-    locations = [os.path.join(path, program) for path in os.environ["PATH"].split(os.pathsep)]
-    found     = [loc for loc in locations if is_exe(loc)]
+    locations = [os.path.join(path, program)
+                 for path in os.environ["PATH"].split(os.pathsep)]
+    found = [loc for loc in locations if is_exe(loc)]
 
     if not found:
         if not fail:
@@ -46,9 +49,9 @@ class OpenImageSequenceAddonPreferences(AddonPreferences):
 
     ffmpeg_path = "Point to location of ffmpeg executable"
     exec_path = which('ffmpeg')
-    if not exec_path == None:
+    if exec_path is not None:
         ffmpeg_path = exec_path
-        
+
     ffmpeg_exec_path: StringProperty(
         name="'ffmpeg' executable",
         subtype='FILE_PATH',
@@ -65,6 +68,7 @@ class OpenAsImageSequence(Operator):
     bl_idname = "object.movie_as_image_sequence"
     bl_label = "Open Clip as Image Sequence"
     bl_options = {'REGISTER', 'UNDO'}
+
     filter_glob: StringProperty(
         default="*.mpg;*.mpeg;*.mp4;*.avi;*.mov;*.dv;",
         options={'HIDDEN'},
@@ -72,7 +76,7 @@ class OpenAsImageSequence(Operator):
     filepath: StringProperty(
             name="Clip Path",
             description="Clip to be opened as image sequence",
-            maxlen= 1024,
+            maxlen=1024,
             subtype='FILE_PATH',
             )
 
@@ -83,9 +87,9 @@ class OpenAsImageSequence(Operator):
     def execute(self, context):
         preferences = context.preferences
         prefs = preferences.addons[__name__].preferences
-        
+
         wm = bpy.context.window_manager
-        
+
         import subprocess
 
         # Create folder if it doesn't already exist
@@ -95,17 +99,16 @@ class OpenAsImageSequence(Operator):
         # progress from [0 - 100]
         wm.progress_begin(0, 2)
         wm.progress_update(1)
-        process = subprocess.Popen([prefs.ffmpeg_exec_path, \
-                                    '-y', \
-                                    '-i', \
-                                    self.filepath, \
-                                    join(dir_name, \
-                                    "frame_%04d.png")])
-        while process.poll() == None:
+        process = subprocess.Popen([prefs.ffmpeg_exec_path,
+                                    '-y',
+                                    '-i',
+                                    self.filepath,
+                                    join(dir_name,
+                                         "frame_%04d.png")])
+        while process.poll() is None:
             wm.progress_update(1)
-
-        image_sequence = [ {"name":f} for f in os.listdir(dir_name) \
-                            if isfile(join(dir_name, f))]
+        image_sequence = [{"name": f} for f in os.listdir(dir_name)
+                          if isfile(join(dir_name, f))]
         bpy.data.movieclips["frame_0001.png"].name = basename(dir_name)
 
         bpy.context.scene.frame_start = 1
